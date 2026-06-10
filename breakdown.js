@@ -84,6 +84,12 @@ export function processWorkbook(arrayBuffer, sheetName) {
   const df = rows.map(norm)
   const cols = Object.keys(df[0])
 
+  // Detect SKU code column — supports both 'A' and 'SKU Code'
+  const skuCodeCol = cols.find(c => c === 'SKU Code') || 
+                     cols.find(c => c === 'A') ||
+                     cols.find(c => c.toLowerCase() === 'sku code') ||
+                     'A'
+
   const stateCol = cols.find(c => c.toLowerCase() === 'state') || 'State'
   const dateCol  = cols.find(c => c.toLowerCase().includes('date')) || 'Date Updated'
 
@@ -101,7 +107,7 @@ export function processWorkbook(arrayBuffer, sheetName) {
 
   // Sort: newest date first, specific-state beats generic on same date
   expanded.sort((a, b) => {
-    const skuCmp = String(a['SKU Code'] || '').localeCompare(String(b['SKU Code'] || ''))
+    const skuCmp = String(a[skuCodeCol] || '').localeCompare(String(b[skuCodeCol] || ''))
     if (skuCmp !== 0) return skuCmp
     const stCmp = a._Resolved_State.localeCompare(b._Resolved_State)
     if (stCmp !== 0) return stCmp
@@ -112,19 +118,19 @@ export function processWorkbook(arrayBuffer, sheetName) {
     return (isGeneric(a._raw_state) ? 1 : 0) - (isGeneric(b._raw_state) ? 1 : 0)
   })
 
-  // Latest: first occurrence per (SKU Code, state, channel)
+  // Latest: first occurrence per (SKU code, state, channel)
   const seen = new Set()
   const latest = []
   for (const row of expanded) {
-    const key = `${row['SKU Code']}||${row._Resolved_State}||${row._Resolved_Channel}`
+    const key = `${row[skuCodeCol]}||${row._Resolved_State}||${row._Resolved_Channel}`
     if (!seen.has(key)) { seen.add(key); latest.push(row) }
   }
 
-  // Build output columns
+  // Build output columns — put SKU code column first after front cols
   const dropCols = new Set(['State', 'Channel', 'State ID', 'Channel ID'])
-  const cleanCols = cols.filter(c => !dropCols.has(c) && !c.startsWith('Unnamed'))
+  const cleanCols = cols.filter(c => !dropCols.has(c) && !c.startsWith('Unnamed') && !c.startsWith('__EMPTY'))
   const frontCols = [dateCol, 'Model', 'Manufacturer', 'Category', 'Brand',
-                     '_Resolved_Channel', '_Resolved_State', 'SKU Code', 'SKU']
+                     '_Resolved_Channel', '_Resolved_State', skuCodeCol, 'SKU']
   const restCols = cleanCols.filter(c => !frontCols.includes(c))
   const allOutCols = [...frontCols, ...restCols]
 
@@ -134,6 +140,7 @@ export function processWorkbook(arrayBuffer, sheetName) {
       for (const c of allOutCols) {
         const key = c === '_Resolved_Channel' ? 'Channel'
                   : c === '_Resolved_State'   ? 'State'
+                  : c === skuCodeCol && skuCodeCol === 'A' ? 'SKU Code'
                   : c
         let val = c === '_Resolved_Channel' ? row._Resolved_Channel
                 : c === '_Resolved_State'   ? row._Resolved_State
@@ -160,7 +167,6 @@ export function buildOutputXLSX(fullRows, latestRows, sourceRows, sheetUsed) {
     ['SKU Price Breakdown — Summary'],
     [],
     ['Metric', 'Value'],
-    ['Source file', 'Master Price Update vF.xlsx'],
     ['Sheet read', sheetUsed],
     ['Source file rows', sourceRows],
     ['Full Expanded rows', fullRows.length],
