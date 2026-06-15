@@ -1,9 +1,9 @@
 const XLSX = require('xlsx')
 const https = require('https')
 
-const TENANT_ID      = process.env.VITE_TENANT_ID
-const CLIENT_ID      = process.env.VITE_CLIENT_ID
-const CLIENT_SECRET  = process.env.VITE_CLIENT_SECRET
+const TENANT_ID      = process.env.AZURE_TENANT_ID
+const CLIENT_ID      = process.env.AZURE_CLIENT_ID
+const CLIENT_SECRET  = process.env.AZURE_CLIENT_SECRET
 const SHAREPOINT_HOST = 'omnibiz0.sharepoint.com'
 const SITE_NAME      = 'FinancialPlaninngAnalysis'
 const FILE_NAME      = 'Master Price Update vF.xlsx'
