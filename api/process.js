@@ -66,7 +66,7 @@ if (!rows.length) throw new Error(`Sheet "${targetSheet}" appears to be empty. A
   const df = rows.map(norm)
   const cols = Object.keys(df[0])
 
-  const skuCol  = cols.find(c => c === 'SKU Code') || cols.find(c => c === 'A') || 'A'
+  const skuCol  = cols.find(c => c === 'SKU Code') || cols.find(c => c === 'SKU') || cols[0]
   const stateCol = cols.find(c => c.toLowerCase() === 'state') || 'State'
   const dateCol  = cols.find(c => c.toLowerCase().includes('date')) || 'Date Updated'
 
