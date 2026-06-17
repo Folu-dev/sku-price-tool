@@ -195,7 +195,9 @@ module.exports = async (req, res) => {
     const file = files.find(f => f.name === FILE_NAME)
     if (!file) throw new Error(`File "${FILE_NAME}" not found`)
 
-    const fileRes = await graphGet(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives/${file.parentReference.driveId}/items/${file.id}/content`, token)
+    const fileMetaRes = await graphGet(`https://graph.microsoft.com/v1.0/sites/${siteId}/drives/${file.parentReference.driveId}/items/${file.id}?$select=@microsoft.graph.downloadUrl`, token)
+const downloadUrl = JSON.parse(fileMetaRes.body.toString())['@microsoft.graph.downloadUrl']
+const fileRes = await httpsGet(downloadUrl, {})
     const { buffer, stats } = processBuffer(fileRes.body, SHEET_NAME)
 
     res.setHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
