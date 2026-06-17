@@ -57,9 +57,10 @@ function formatDate(val) {
 
 function processBuffer(buffer) {
   const wb = XLSX.read(buffer, { type: 'buffer', cellDates: true })
-  const ws = wb.Sheets[wb.SheetNames[0]]
-  const rows = XLSX.utils.sheet_to_json(ws, { defval: '' })
-  if (!rows.length) throw new Error('Sheet appears to be empty')
+  const targetSheet = wb.SheetNames.includes('MMP New Structure') ? 'MMP New Structure' : wb.SheetNames[0]
+const ws = wb.Sheets[targetSheet]
+const rows = XLSX.utils.sheet_to_json(ws, { defval: '', range: 1 })
+if (!rows.length) throw new Error(`Sheet "${targetSheet}" appears to be empty. Available sheets: ${wb.SheetNames.join(', ')}`)
 
   const norm = r => { const o = {}; Object.entries(r).forEach(([k,v]) => { o[k.trim()] = v }); return o }
   const df = rows.map(norm)
