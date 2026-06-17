@@ -114,7 +114,7 @@ function processBuffer(buffer, sheetName) {
   const targetSheet = sheetName && wb.SheetNames.includes(sheetName) ? sheetName : wb.SheetNames[0]
   const ws = wb.Sheets[targetSheet]
   const rows = XLSX.utils.sheet_to_json(ws, { defval:'', range:1 })
- throw new Error(`SheetNames found: ${wb.SheetNames.length} - [${wb.SheetNames.join(', ')}]`)
+if (!rows.length) throw new Error(`Sheet "${targetSheet}" is empty`)
 
   const norm = r => { const o={}; Object.entries(r).forEach(([k,v])=>{ o[k.trim()]=v }); return o }
   const df = rows.map(norm)
