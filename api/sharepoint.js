@@ -110,7 +110,7 @@ function formatDate(val) {
 }
 
 function processBuffer(buffer, sheetName) {
-  const wb = XLSX.read(buffer, { type:'buffer', cellDates:true })
+  const wb = XLSX.read(buffer, { type:'buffer', cellDates:true, sheets: sheetName ? [sheetName] : undefined })
   const targetSheet = sheetName && wb.SheetNames.includes(sheetName) ? sheetName : wb.SheetNames[0]
   const ws = wb.Sheets[targetSheet]
   const rows = XLSX.utils.sheet_to_json(ws, { defval:'', range:1 })
