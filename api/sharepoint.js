@@ -113,7 +113,23 @@ function processBuffer(buffer, sheetName) {
 const wb = XLSX.read(buffer, { type:'buffer', cellDates:true, sheets:[sheetName] })
   const targetSheet = wb.SheetNames.find(s => s.trim() === sheetName.trim()) || wb.SheetNames[0]
   const ws = wb.Sheets[targetSheet]
-  const rows = XLSX.utils.sheet_to_json(ws, { defval:'', range:1 })
+  // Find the actual header row by looking for a row containing 'SKU' or 'State'
+const ref = ws['!ref']
+const range = XLSX.utils.decode_range(ref || 'A1')
+let headerRow = 1 // default skip row 1
+for (let r = 0; r <= Math.min(5, range.e.r); r++) {
+  for (let c = range.s.c; c <= range.e.c; c++) {
+    const cell = ws[XLSX.utils.encode_cell({r, c})]
+    if (cell && typeof cell.v === 'string' && 
+        (cell.v.trim().toLowerCase() === 'sku' || cell.v.trim().toLowerCase() === 'state')) {
+      headerRow = r
+      break
+    }
+  }
+  if (headerRow !== 1 || r === 0) continue
+  break
+}
+const rows = XLSX.utils.sheet_to_json(ws, { defval:'', range: headerRow })
 if (!rows.length) throw new Error(`Sheet "${targetSheet}" is empty`)
 
   const norm = r => { const o={}; Object.entries(r).forEach(([k,v])=>{ o[k.trim()]=v }); return o }
